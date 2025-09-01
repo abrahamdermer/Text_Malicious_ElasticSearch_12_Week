@@ -55,4 +55,34 @@ class DAL:
             document['emotion'] = ''
             document['CreateDate'] = self.convert(document['CreateDate'][:18])
             self.es.index(index=self.index_name, id=i, body=document)
+        self.es.indices.refresh(index=self.index_name)
+
+
+    def get_all_documents(self)->list[dict]:
+        query = {
+            "query": {
+                "match_all": {}
+            }
+        }
+        # print(self.es.indices.exists(index=self.index_name))
+        # print(self.es.count(index=self.index_name))
+
+        res = self.es.search(index=self.index_name, body=query)
+        # print(res)
+        print(len(res['hits']['hits']))
+        return res['hits']['hits']
             
+
+    def update_fild(self,fild,new_data:dict):
+        for id in new_data.keys():
+            self.es.update(
+                index=self.index_name,
+                id=id,
+                script={
+                    "source": f"ctx._source.{fild} = params.{fild}",
+                    "params": {
+                       fild : new_data[id]
+                    }
+                },
+            )
+        self.es.indices.refresh(index=self.index_name)

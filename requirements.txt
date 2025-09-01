@@ -1,0 +1,10 @@
+certifi==2025.8.3
+click==8.2.1
+colorama==0.4.6
+elastic-transport==8.17.1
+elasticsearch==8.15.0
+joblib==1.5.2
+nltk==3.9.1
+regex==2025.8.29
+tqdm==4.67.1
+urllib3==2.5.0
