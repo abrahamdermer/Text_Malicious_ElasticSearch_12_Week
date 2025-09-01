@@ -4,24 +4,34 @@ from tools.dal import DAL
 
 from tools.emotion_classifier import Classification
 
+from tools.find_weapons import Find_weapons
+
 dal = DAL()
 dal.build_index()
-dal.send_twwit_list(Reader.read_csv_by_address('./data/tweets_injected.csv')[:5])
+dal.send_twwit_list(Reader.read_csv_by_address('./data/tweets_injected.csv')[:50])
 
+
+# data = dal.get_all_documents()
+
+# print(data)
+
+# new = Classification.add_val_to_emotion_fild(data)
+
+# # print(new)
+
+# dal.update_fild('emotion',new)
+
+
+
+f  = Find_weapons()
+f.find_and_update(dal)
 
 data = dal.get_all_documents()
 
 print(data)
 
-new = Classification.add_val_to_emotion_fild(data)
 
-# print(new)
-
-dal.update_fild('emotion',new)
-
-
-data = dal.get_all_documents()
-print(data)
-
+# data = dal.find_ids_by_weapon('Gun')
+# print(data)
 # print(Reader.read_csv_by_address('./data/tweets_injected.csv')[0])
 # print(dal.es.indices.get_mapping(index=dal.index_name))

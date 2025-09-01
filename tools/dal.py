@@ -69,7 +69,7 @@ class DAL:
 
         res = self.es.search(index=self.index_name, body=query)
         # print(res)
-        print(len(res['hits']['hits']))
+        # print(len(res['hits']['hits']))
         return res['hits']['hits']
             
 
@@ -82,6 +82,37 @@ class DAL:
                     "source": f"ctx._source.{fild} = params.{fild}",
                     "params": {
                        fild : new_data[id]
+                    }
+                },
+            )
+        self.es.indices.refresh(index=self.index_name)
+
+    def find_ids_by_weapon(self , weapon):
+        query = {
+            "_source":['id'],
+            "query": {
+                "match": {
+                    'text':weapon
+                }
+            }
+        }
+       
+        res = self.es.search(index=self.index_name, body=query)
+        # print(res)
+        ids = []
+        for doc in res['hits']['hits']:
+            ids.append(doc['_id'])
+        return ids
+    
+    def update_weaopn_by_ids(self,weapon:str,ids:list):
+        for id in ids:
+            self.es.update(
+                index=self.index_name,
+                id=id,
+                script={
+                    "source": "ctx._source.weapons += ' '+ params.weapons",
+                    "params": {
+                       'weapons' : weapon
                     }
                 },
             )
