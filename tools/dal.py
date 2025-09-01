@@ -19,10 +19,19 @@ class DAL:
                 'text': {'type': 'text'},
                 'Antisemitic': {'type': 'boolean'},
                 'CreateDate': {'type': 'date'},
-                'weapons': {'type': 'text'},
+                "weapons": {
+                        "type": "text",
+                        "fields": {
+                            "keyword": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                            }
+                        }
+                        },
                 'emotion': {'type': 'keyword'},
             }
         }    
+        # self.es.indices.create(index=self.index_name,)
         self.es.indices.create(index=self.index_name,mappings=mapping)
 
 
@@ -50,8 +59,8 @@ class DAL:
     def send_twwit_list(self,twwits:list[dict])->None:
         for i, document in enumerate(twwits):
             document.pop('TweetID')
-            document['Antisemitic'] = bool(document['Antisemitic'])
-            document['weapons'] =''
+            document['Antisemitic'] = bool(int(document['Antisemitic']))
+            document['weapons'] =' '
             document['emotion'] = ''
             document['CreateDate'] = self.convert(document['CreateDate'][:18])
             self.es.index(index=self.index_name, id=i, body=document)
@@ -60,12 +69,12 @@ class DAL:
 
     def get_all_documents(self)->list[dict]:
         query = {
+            "size":20,
             "query": {
                 "match_all": {}
             }
         }
         # print(self.es.indices.exists(index=self.index_name))
-        # print(self.es.count(index=self.index_name))
 
         res = self.es.search(index=self.index_name, body=query)
         # print(res)
@@ -117,3 +126,26 @@ class DAL:
                 },
             )
         self.es.indices.refresh(index=self.index_name)
+
+    def delete_not_intaresting(self):
+        print(self.es.count(index=self.index_name))
+        query = {
+                "query": {
+                    'bool':{
+                        "must": [
+                            {'term':{"Antisemitic": False}},
+                            # {'term':{"weapons":''}},
+                            {"script": {"script": {"lang": "painless", "source": "doc['weapons'].size() == 0"}}}
+                        ],
+                        'should':[
+                            {"term": {"emotion": "positive"}},
+                            {"term": {"emotion": "neutral"}}
+                        ],
+                        "minimum_should_match": 1,
+                        # 'must_not':[{'exists':{'field':'weapons'}}]
+                        }
+                }
+            }
+        self.es.delete_by_query(index=self.index_name, body=query)
+        self.es.indices.refresh(index=self.index_name)
+        print(self.es.count(index=self.index_name))

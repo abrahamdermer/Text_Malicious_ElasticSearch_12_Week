@@ -16,6 +16,6 @@ class Reader:
     def read_by_address(address):
         with open(address, 'r',encoding='utf8') as f:
             data  = f.read().split('\n')
-            print(data)
+            # print(data)
         return data
     
