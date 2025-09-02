@@ -60,7 +60,7 @@ class DAL:
         for i, document in enumerate(twwits):
             document.pop('TweetID')
             document['Antisemitic'] = bool(int(document['Antisemitic']))
-            document['weapons'] =' '
+            # document['weapons'] =' '
             document['emotion'] = ''
             document['CreateDate'] = self.convert(document['CreateDate'][:18])
             self.es.index(index=self.index_name, id=i, body=document)
@@ -69,7 +69,7 @@ class DAL:
 
     def get_all_documents(self)->list[dict]:
         query = {
-            "size":20,
+            "size":9999,
             "query": {
                 "match_all": {}
             }
@@ -98,6 +98,7 @@ class DAL:
 
     def find_ids_by_weapon(self , weapon):
         query = {
+            'size':9999,
             "_source":['id'],
             "query": {
                 "match": {
@@ -119,7 +120,9 @@ class DAL:
                 index=self.index_name,
                 id=id,
                 script={
-                    "source": "ctx._source.weapons += ' '+ params.weapons",
+                    "source": """if (ctx._source.weapons == null){ctx._source.weapons = params.weapons;}
+                    else:
+                      ctx._source.weapons += ' '+ params.weapons""",
                     "params": {
                        'weapons' : weapon
                     }
@@ -142,7 +145,7 @@ class DAL:
                             {"term": {"emotion": "neutral"}}
                         ],
                         "minimum_should_match": 1,
-                        # 'must_not':[{'exists':{'field':'weapons'}}]
+                        'must_not':[{'exists':{'field':'weapons'}}]
                         }
                 }
             }
